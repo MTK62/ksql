@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Confluent Inc.
+ * Copyright 2021 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -18,12 +18,11 @@ package io.confluent.ksql.rest.server.execution;
 import static io.netty.handler.codec.http.HttpResponseStatus.FORBIDDEN;
 import static io.netty.handler.codec.http.HttpResponseStatus.UNAUTHORIZED;
 
-import io.confluent.ksql.parser.tree.CreateConnector;
+import io.confluent.ksql.parser.tree.Statement;
 import io.confluent.ksql.rest.entity.KsqlEntity;
 import io.confluent.ksql.services.ConnectClient.ConnectResponse;
 import io.confluent.ksql.statement.ConfiguredStatement;
 import java.util.Optional;
-import org.apache.kafka.connect.runtime.rest.entities.ConnectorInfo;
 
 /**
  * An interface that allows to plug-in custom error handling for Connect server errors, such as 403
@@ -40,8 +39,8 @@ public interface ConnectServerErrors {
    * @return the optional {@link KsqlEntity} that represents server error
    */
   default Optional<KsqlEntity> handle(
-      final ConfiguredStatement<CreateConnector> statement,
-      final ConnectResponse<ConnectorInfo> response) {
+      final ConfiguredStatement<? extends Statement> statement,
+      final ConnectResponse<?> response) {
     if (response.httpCode() == FORBIDDEN.code()) {
       return handleForbidden(statement, response);
     } else if (response.httpCode() == UNAUTHORIZED.code()) {
@@ -59,8 +58,8 @@ public interface ConnectServerErrors {
    * @return the optional {@code KsqlEntity} that represents server error
    */
   Optional<KsqlEntity> handleForbidden(
-      ConfiguredStatement<CreateConnector> statement,
-      ConnectResponse<ConnectorInfo> response);
+      ConfiguredStatement<? extends Statement> statement,
+      ConnectResponse<?> response);
 
   /**
    * This method allows altering error response on 401 Unauthorized.
@@ -70,10 +69,17 @@ public interface ConnectServerErrors {
    * @return the optional {@code KsqlEntity} that represents server error
    */
   Optional<KsqlEntity> handleUnauthorized(
-      ConfiguredStatement<CreateConnector> statement,
-      ConnectResponse<ConnectorInfo> response);
+      ConfiguredStatement<? extends Statement> statement,
+      ConnectResponse<?> response);
 
+  /**
+   * This method is a fall-back for errors that are not handled by the error-specific methods.
+   *
+   * @param statement the executed statement
+   * @param response the failed response
+   * @return the optional {@code KsqlEntity} that represents server error
+   */
   Optional<KsqlEntity> handleDefault(
-      ConfiguredStatement<CreateConnector> statement,
-      ConnectResponse<ConnectorInfo> response);
+      ConfiguredStatement<? extends Statement> statement,
+      ConnectResponse<?> response);
 }

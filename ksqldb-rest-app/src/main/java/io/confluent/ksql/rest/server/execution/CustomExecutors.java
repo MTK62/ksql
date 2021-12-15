@@ -79,9 +79,11 @@ public class CustomExecutors {
         put(ListProperties.class,
             (StatementExecutor<ListProperties>) ListPropertiesExecutor::execute);
         put(ListConnectors.class,
-            (StatementExecutor<ListConnectors>) ListConnectorsExecutor::execute);
+            (StatementExecutor<ListConnectors>)
+                new ListConnectorsExecutor(connectErrorHandler)::execute);
         put(ListConnectorPlugins.class,
-            (StatementExecutor<ListConnectorPlugins>) ListConnectorPluginsExecutor::execute);
+            (StatementExecutor<ListConnectorPlugins>)
+                new ListConnectorPluginsExecutor(connectErrorHandler)::execute);
         put(ListTypes.class,
             (StatementExecutor<ListTypes>) ListTypesExecutor::execute);
         put(ListVariables.class,
@@ -100,96 +102,99 @@ public class CustomExecutors {
         put(InsertValues.class, insertValuesExecutor());
         put(CreateConnector.class,
             (StatementExecutor<CreateConnector>) new ConnectExecutor(connectErrorHandler)::execute);
-        put(DropConnector.class, (StatementExecutor<DropConnector>) DropConnectorExecutor::execute);
+        put(DropConnector.class,
+            (StatementExecutor<DropConnector>)
+                new DropConnectorExecutor(connectErrorHandler)::execute);
         put(DescribeConnector.class,
-            (StatementExecutor<DescribeConnector>) new DescribeConnectorExecutor()::execute);
+            (StatementExecutor<DescribeConnector>)
+                new DescribeConnectorExecutor(connectErrorHandler)::execute);
         put(TerminateQuery.class,
             (StatementExecutor<TerminateQuery>) TerminateQueryExecutor::execute);
       }};
   }
 
   @VisibleForTesting
-  public StatementExecutor<Explain> explain() {
+  StatementExecutor<Explain> explain() {
     return (StatementExecutor<Explain>) EXECUTOR_MAP.get(Explain.class);
   }
 
   @VisibleForTesting
-  public StatementExecutor<ListTopics> listTopics() {
+  StatementExecutor<ListTopics> listTopics() {
     return (StatementExecutor<ListTopics>) EXECUTOR_MAP.get(ListTopics.class);
   }
 
   @VisibleForTesting
-  public StatementExecutor<TerminateQuery> terminateQuery() {
+  StatementExecutor<TerminateQuery> terminateQuery() {
     return (StatementExecutor<TerminateQuery>) EXECUTOR_MAP.get(TerminateQuery.class);
   }
 
   @VisibleForTesting
-  public StatementExecutor<DefineVariable> defineVariable() {
+  StatementExecutor<DefineVariable> defineVariable() {
     return (StatementExecutor<DefineVariable>) EXECUTOR_MAP.get(DefineVariable.class);
   }
 
   @VisibleForTesting
-  public StatementExecutor<UndefineVariable> undefineVariable() {
+  StatementExecutor<UndefineVariable> undefineVariable() {
     return (StatementExecutor<UndefineVariable>) EXECUTOR_MAP.get(UndefineVariable.class);
   }
 
   @VisibleForTesting
-  public StatementExecutor<SetProperty> setProperty() {
+  StatementExecutor<SetProperty> setProperty() {
     return (StatementExecutor<SetProperty>) EXECUTOR_MAP.get(SetProperty.class);
   }
 
   @VisibleForTesting
-  public StatementExecutor<UnsetProperty> unsetProperty() {
+  StatementExecutor<UnsetProperty> unsetProperty() {
     return (StatementExecutor<UnsetProperty>) EXECUTOR_MAP.get(UnsetProperty.class);
   }
 
   @VisibleForTesting
-  public StatementExecutor<ListProperties> listProperties() {
+  StatementExecutor<ListProperties> listProperties() {
     return (StatementExecutor<ListProperties>) EXECUTOR_MAP.get(ListProperties.class);
   }
 
   @VisibleForTesting
-  public StatementExecutor<ListStreams> listStreams() {
+  StatementExecutor<ListStreams> listStreams() {
     return (StatementExecutor<ListStreams>) EXECUTOR_MAP.get(ListStreams.class);
   }
 
   @VisibleForTesting
-  public StatementExecutor<DescribeStreams> describeStreams() {
+  StatementExecutor<DescribeStreams> describeStreams() {
     return (StatementExecutor<DescribeStreams>) EXECUTOR_MAP.get(DescribeStreams.class);
   }
 
   @VisibleForTesting
-  public StatementExecutor<ListTables> listTables() {
+  StatementExecutor<ListTables> listTables() {
     return (StatementExecutor<ListTables>) EXECUTOR_MAP.get(ListTables.class);
   }
 
   @VisibleForTesting
-  public StatementExecutor<DescribeTables> describeTables() {
+  StatementExecutor<DescribeTables> describeTables() {
     return (StatementExecutor<DescribeTables>) EXECUTOR_MAP.get(DescribeTables.class);
   }
 
   @VisibleForTesting
-  public StatementExecutor<ShowColumns> showColumns() {
+  StatementExecutor<ShowColumns> showColumns() {
     return (StatementExecutor<ShowColumns>) EXECUTOR_MAP.get(ShowColumns.class);
   }
 
   @VisibleForTesting
-  public StatementExecutor<ListFunctions> listFunctions() {
+  StatementExecutor<ListFunctions> listFunctions() {
     return (StatementExecutor<ListFunctions>) EXECUTOR_MAP.get(ListFunctions.class);
   }
 
   @VisibleForTesting
-  public StatementExecutor<DescribeFunction> describeFunction() {
+  StatementExecutor<DescribeFunction> describeFunction() {
     return (StatementExecutor<DescribeFunction>) EXECUTOR_MAP.get(DescribeFunction.class);
   }
 
   @VisibleForTesting
-  public StatementExecutor<ListQueries> listQueries() {
+  StatementExecutor<ListQueries> listQueries() {
     return (StatementExecutor<ListQueries>) EXECUTOR_MAP.get(ListQueries.class);
   }
 
   @VisibleForTesting
-  public StatementExecutor<ListVariables> listVariables() {
+  StatementExecutor<ListVariables> listVariables() {
     return (StatementExecutor<ListVariables>) EXECUTOR_MAP.get(ListVariables.class);
   }
 

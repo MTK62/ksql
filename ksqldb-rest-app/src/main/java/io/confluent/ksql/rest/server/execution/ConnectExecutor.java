@@ -42,7 +42,7 @@ import org.apache.kafka.connect.runtime.rest.entities.ConnectorInfo;
 public final class ConnectExecutor {
   private final ConnectServerErrors connectErrorHandler;
 
-  public ConnectExecutor(final ConnectServerErrors connectErrorHandler) {
+  ConnectExecutor(final ConnectServerErrors connectErrorHandler) {
     this.connectErrorHandler = connectErrorHandler;
   }
 

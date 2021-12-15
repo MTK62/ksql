@@ -106,9 +106,6 @@ public class RecoveryTest {
   @Mock
   private Errors errorHandler = mock(Errors.class);
 
-  @Mock
-
-
   private final KsqlServer server1 = new KsqlServer(commands);
   private final KsqlServer server2 = new KsqlServer(commands);
 

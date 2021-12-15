@@ -130,7 +130,7 @@ public class KsqlConfig extends AbstractConfig {
       KSQL_CONNECT_PREFIX + "error.handler";
   public static final String KSQL_CONNECT_SERVER_ERROR_HANDLER_DEFAULT = null;
   private static final String KSQL_CONNECT_SERVER_ERROR_HANDLER_DOC =
-      "A class that allows the KSQL server to customize connect error handling.";
+      "A class that allows the ksqlDB server to customize error handling from connector requests.";
 
   public static final String KSQL_ENABLE_UDFS = "ksql.udfs.enabled";
 

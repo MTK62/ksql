@@ -88,6 +88,9 @@ public class ConnectExecutorTest {
           CREATE_DUPLICATE_CONNECTOR), SessionConfig.of(CONFIG, ImmutableMap.of())
       );
 
+  private static final ConnectExecutor EXECUTOR =
+      new ConnectExecutor(new DefaultConnectServerErrors());
+
   @Mock
   private ServiceContext serviceContext;
   @Mock
@@ -106,8 +109,7 @@ public class ConnectExecutorTest {
     givenCreationSuccess();
 
     // When:
-    new ConnectExecutor(new DefaultConnectServerErrors())
-        .execute(CREATE_CONNECTOR_CONFIGURED,
+    EXECUTOR.execute(CREATE_CONNECTOR_CONFIGURED,
             mock(SessionProperties.class),
             null,
             serviceContext);
@@ -124,11 +126,10 @@ public class ConnectExecutorTest {
     givenCreationSuccess();
 
     // When:
-    final Optional<KsqlEntity> entity = new ConnectExecutor(new DefaultConnectServerErrors())
-        .execute(CREATE_CONNECTOR_CONFIGURED,
-            mock(SessionProperties.class),
-            null,
-            serviceContext).getEntity();
+    final Optional<KsqlEntity> entity = EXECUTOR.execute(CREATE_CONNECTOR_CONFIGURED,
+        mock(SessionProperties.class),
+        null,
+        serviceContext).getEntity();
 
     // Then:
     assertThat("Expected non-empty response", entity.isPresent());
@@ -142,9 +143,10 @@ public class ConnectExecutorTest {
     givenCreationError();
 
     // When:
-    final Optional<KsqlEntity> entity = new ConnectExecutor(new DefaultConnectServerErrors())
-        .execute(CREATE_CONNECTOR_CONFIGURED, mock(SessionProperties.class), null,
-            serviceContext).getEntity();
+    final Optional<KsqlEntity> entity = EXECUTOR.execute(CREATE_CONNECTOR_CONFIGURED,
+        mock(SessionProperties.class),
+        null,
+        serviceContext).getEntity();
 
     // Then:
     assertThat("Expected non-empty response", entity.isPresent());
@@ -158,11 +160,10 @@ public class ConnectExecutorTest {
     givenCreationSuccess();
 
     // When:
-    final Optional<KsqlEntity> entity = new ConnectExecutor(new DefaultConnectServerErrors())
-        .execute(CREATE_CONNECTOR_CONFIGURED,
-            mock(SessionProperties.class),
-            null,
-            serviceContext).getEntity();
+    final Optional<KsqlEntity> entity = EXECUTOR.execute(CREATE_CONNECTOR_CONFIGURED,
+        mock(SessionProperties.class),
+        null,
+        serviceContext).getEntity();
 
     // Then:
     assertThat("Expected non-empty response", entity.isPresent());
@@ -179,11 +180,10 @@ public class ConnectExecutorTest {
     givenConnectorExists();
 
     //When
-    final Optional<KsqlEntity> entity = new ConnectExecutor(new DefaultConnectServerErrors())
-        .execute(CREATE_DUPLICATE_CONNECTOR_CONFIGURED,
-            mock(SessionProperties.class),
-            null,
-            serviceContext).getEntity();
+    final Optional<KsqlEntity> entity = EXECUTOR.execute(CREATE_DUPLICATE_CONNECTOR_CONFIGURED,
+        mock(SessionProperties.class),
+        null,
+        serviceContext).getEntity();
     //Then
     assertThat("Expected non-empty response", entity.isPresent());
     assertThat(entity.get(), instanceOf(WarningEntity.class));
@@ -198,11 +198,10 @@ public class ConnectExecutorTest {
             ConnectResponse.failure("Connector foo already exists", HttpStatus.SC_CONFLICT));
 
     // When:
-    final Optional<KsqlEntity> entity = new ConnectExecutor(new DefaultConnectServerErrors())
-        .execute(CREATE_CONNECTOR_CONFIGURED,
-            mock(SessionProperties.class),
-            null,
-            serviceContext).getEntity();
+    final Optional<KsqlEntity> entity = EXECUTOR.execute(CREATE_CONNECTOR_CONFIGURED,
+        mock(SessionProperties.class),
+        null,
+        serviceContext).getEntity();
 
     // Then:
     assertThat("Expected non-empty response", entity.isPresent());
@@ -221,9 +220,10 @@ public class ConnectExecutorTest {
         createConnectorMissingType), SessionConfig.of(CONFIG, ImmutableMap.of()));
 
     // When:
-    final Optional<KsqlEntity> entity = new ConnectExecutor(new DefaultConnectServerErrors())
-        .execute(createConnectorMissingTypeConfigured, mock(SessionProperties.class),
-            null, serviceContext).getEntity();
+    final Optional<KsqlEntity> entity = EXECUTOR.execute(createConnectorMissingTypeConfigured,
+        mock(SessionProperties.class),
+        null,
+        serviceContext).getEntity();
 
     // Then:
     assertThat("Expected non-empty response", entity.isPresent());
@@ -246,9 +246,10 @@ public class ConnectExecutorTest {
 
 
     // When:
-    final Optional<KsqlEntity> entity = new ConnectExecutor(new DefaultConnectServerErrors())
-        .execute(createConnectorEmptyTypeConfigured, mock(SessionProperties.class),
-            null, serviceContext).getEntity();
+    final Optional<KsqlEntity> entity = EXECUTOR.execute(createConnectorEmptyTypeConfigured,
+        mock(SessionProperties.class),
+        null,
+        serviceContext).getEntity();
 
     // Then:
     assertThat("Expected non-empty response", entity.isPresent());
@@ -258,7 +259,7 @@ public class ConnectExecutorTest {
   }
 
   @Test
-  public void shouldReturnPluggableErrors() {
+  public void shouldReturnPluggableForbiddenError() {
     //Given:
     givenValidationSuccess();
     when(connectClient.create(anyString(), anyMap()))
@@ -283,6 +284,62 @@ public class ConnectExecutorTest {
     assertThat(entity.get(), instanceOf(ErrorEntity.class));
     assertThat(((ErrorEntity) entity.get()).getErrorMessage(),
         is(DummyConnectServerErrors.FORBIDDEN_ERR));
+  }
+
+  @Test
+  public void shouldReturnPluggableUnauthorizedError() {
+    //Given:
+    givenValidationSuccess();
+    when(connectClient.create(anyString(), anyMap()))
+        .thenReturn(
+            ConnectResponse.failure("UNAUTHORIZED", HttpStatus.SC_UNAUTHORIZED));
+
+    final KsqlConfig config = new KsqlConfig(ImmutableMap.of(
+        KSQL_CONNECT_SERVER_ERROR_HANDLER, DummyConnectServerErrors.class));
+    final ConnectServerErrors connectErrorHandler = config.getConfiguredInstance(
+        KSQL_CONNECT_SERVER_ERROR_HANDLER,
+        ConnectServerErrors.class);
+
+    // When:
+    final Optional<KsqlEntity> entity = new ConnectExecutor(connectErrorHandler)
+        .execute(CREATE_CONNECTOR_CONFIGURED,
+            mock(SessionProperties.class),
+            null,
+            serviceContext).getEntity();
+
+    // Then:
+    assertThat("Expected non-empty response", entity.isPresent());
+    assertThat(entity.get(), instanceOf(ErrorEntity.class));
+    assertThat(((ErrorEntity) entity.get()).getErrorMessage(),
+        is(DummyConnectServerErrors.UNAUTHORIZED_ERR));
+  }
+
+  @Test
+  public void shouldReturnDefaultPluggableErrorOnUnknownCode() {
+    //Given:
+    givenValidationSuccess();
+    when(connectClient.create(anyString(), anyMap()))
+        .thenReturn(
+            ConnectResponse.failure("NOT ACCEPTABLE", HttpStatus.SC_NOT_ACCEPTABLE));
+
+    final KsqlConfig config = new KsqlConfig(ImmutableMap.of(
+        KSQL_CONNECT_SERVER_ERROR_HANDLER, DummyConnectServerErrors.class));
+    final ConnectServerErrors connectErrorHandler = config.getConfiguredInstance(
+        KSQL_CONNECT_SERVER_ERROR_HANDLER,
+        ConnectServerErrors.class);
+
+    // When:
+    final Optional<KsqlEntity> entity = new ConnectExecutor(connectErrorHandler)
+        .execute(CREATE_CONNECTOR_CONFIGURED,
+            mock(SessionProperties.class),
+            null,
+            serviceContext).getEntity();
+
+    // Then:
+    assertThat("Expected non-empty response", entity.isPresent());
+    assertThat(entity.get(), instanceOf(ErrorEntity.class));
+    assertThat(((ErrorEntity) entity.get()).getErrorMessage(),
+        is(DummyConnectServerErrors.DEFAULT_ERR));
   }
 
   private void givenCreationSuccess() {
@@ -351,34 +408,5 @@ public class ConnectExecutorTest {
     when(connectClient.connectors())
         .thenReturn(ConnectResponse.success(
             Arrays.asList("foo", "bar"), HttpStatus.SC_OK));
-  }
-
-  // must be public to allow KsqlRestConfig to create an instance
-  public static class DummyConnectServerErrors implements ConnectServerErrors {
-
-    static final String FORBIDDEN_ERR = "FORBIDDEN";
-    static final String UNAUTHORIZED_ERR = "UNAUTHORIZED";
-    static final String DEFAULT_ERR = "DEFAULT";
-
-    @Override
-    public Optional<KsqlEntity> handleForbidden(
-        final ConfiguredStatement<CreateConnector> statement,
-        final ConnectResponse<ConnectorInfo> response) {
-      return Optional.of(new ErrorEntity(statement.getStatementText(), FORBIDDEN_ERR));
-    }
-
-    @Override
-    public Optional<KsqlEntity> handleUnauthorized(
-        final ConfiguredStatement<CreateConnector> statement,
-        final ConnectResponse<ConnectorInfo> response) {
-      return Optional.of(new ErrorEntity(statement.getStatementText(), UNAUTHORIZED_ERR));
-    }
-
-    @Override
-    public Optional<KsqlEntity> handleDefault(
-        final ConfiguredStatement<CreateConnector> statement,
-        final ConnectResponse<ConnectorInfo> response) {
-      return Optional.of(new ErrorEntity(statement.getStatementText(), DEFAULT_ERR));
-    }
   }
 }

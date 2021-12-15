@@ -22,26 +22,30 @@ import io.confluent.ksql.services.ConnectClient.ConnectResponse;
 import io.confluent.ksql.statement.ConfiguredStatement;
 import java.util.Optional;
 
-public class DefaultConnectServerErrors implements ConnectServerErrors {
+public class DummyConnectServerErrors implements ConnectServerErrors {
+
+  static final String FORBIDDEN_ERR = "FORBIDDEN";
+  static final String UNAUTHORIZED_ERR = "UNAUTHORIZED";
+  static final String DEFAULT_ERR = "DEFAULT";
 
   @Override
   public Optional<KsqlEntity> handleForbidden(
       final ConfiguredStatement<? extends Statement> statement,
       final ConnectResponse<?> response) {
-    return handleDefault(statement, response);
+    return Optional.of(new ErrorEntity(statement.getStatementText(), FORBIDDEN_ERR));
   }
 
   @Override
   public Optional<KsqlEntity> handleUnauthorized(
       final ConfiguredStatement<? extends Statement> statement,
       final ConnectResponse<?> response) {
-    return handleDefault(statement, response);
+    return Optional.of(new ErrorEntity(statement.getStatementText(), UNAUTHORIZED_ERR));
   }
 
   @Override
   public Optional<KsqlEntity> handleDefault(
       final ConfiguredStatement<? extends Statement> statement,
       final ConnectResponse<?> response) {
-    return response.error().map(err -> new ErrorEntity(statement.getStatementText(), err));
+    return Optional.of(new ErrorEntity(statement.getStatementText(), DEFAULT_ERR));
   }
 }
