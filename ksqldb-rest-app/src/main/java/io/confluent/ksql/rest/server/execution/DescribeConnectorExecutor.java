@@ -23,7 +23,6 @@ import io.confluent.ksql.connect.supported.Connectors;
 import io.confluent.ksql.parser.tree.DescribeConnector;
 import io.confluent.ksql.rest.SessionProperties;
 import io.confluent.ksql.rest.entity.ConnectorDescription;
-import io.confluent.ksql.rest.entity.ErrorEntity;
 import io.confluent.ksql.rest.entity.KsqlWarning;
 import io.confluent.ksql.rest.entity.SourceDescription;
 import io.confluent.ksql.rest.entity.SourceDescriptionFactory;
